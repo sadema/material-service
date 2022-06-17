@@ -1,0 +1,48 @@
+[
+  {
+    "type": "record",
+    "name": "MaterialRetourEventData",
+    "namespace": "nl.kristalsoftware.ddd.retourservice.material",
+    "fields": [
+      {
+        "name": "domainEventName",
+        "type": [
+          "null",
+          "string"
+        ],
+        "default": null
+      },
+      {
+        "name": "reference",
+        "type": {
+          "type": "string",
+          "logicalType": "uuid"
+        }
+      },
+      {
+        "name": "description",
+        "type": [
+          "null",
+          "string"
+        ],
+        "default": null
+      },
+      {
+        "name": "quantity",
+        "type": "long",
+        "default": 0
+      },
+      {
+        "name": "ticketreference",
+        "type": [
+          "null",
+          {
+            "type": "string",
+            "logicalType": "uuid"
+          }
+        ],
+        "default": null
+      }
+    ]
+  }
+]

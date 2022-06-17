@@ -1,0 +1,61 @@
+spring:
+  h2:
+    console:
+      enabled: true
+  datasource:
+    url: jdbc:h2:mem:testdb
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: create
+    naming-strategy: org.hibernate.cfg.DefaultComponentSafeNamingStrategy
+  flyway:
+    enabled: false
+  mongodb:
+    embedded:
+      version: latest
+
+  logging:
+    level:
+      org:
+        hibernate:
+          SQL: DEBUG
+          type:
+            descriptor:
+              sql:
+                BasicBinder: TRACE
+
+  kafka:
+    properties:
+      allow.auto.create.topics: false
+      auto.offset.reset: earliest
+      schema.registry.url: http://127.0.0.1:8181
+    consumer:
+      group-id: material-service
+      enable-auto-commit: false
+      auto-commit-interval: 0
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        specific.avro.reader: true
+        spring:
+          deserializer:
+            key:
+              delegate:
+                class: org.apache.kafka.common.serialization.StringDeserializer
+            value:
+              delegate:
+                class: io.confluent.kafka.serializers.KafkaAvroDeserializer
+    producer:
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      properties:
+        schema.registry.url: http://127.0.0.1:8181
+      client-id: material-app
+
+material:
+  kafka:
+    retour:
+      topicname: public.ticketing.materialservice.retour
+#  datastore:
+#    viewstore:
+#      url: http://localhost:9874/memberserviceview/
