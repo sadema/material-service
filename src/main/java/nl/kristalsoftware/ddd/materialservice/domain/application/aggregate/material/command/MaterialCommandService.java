@@ -80,7 +80,7 @@ public class MaterialCommandService {
             MaterialQuantity retourQuantity,
             TicketReference ticketReference) throws AggregateNotFoundException {
         Material material = eventStoreLoader.loadAggregate(materialReference);
-        material.handleCommand(RetourMaterialForTicket.of(
+        material.handleCommand(SendMaterialRetourForTicket.of(
                 retourQuantity,
                 ticketReference
         ));

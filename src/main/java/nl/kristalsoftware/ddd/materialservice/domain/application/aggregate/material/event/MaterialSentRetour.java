@@ -17,7 +17,7 @@ import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.mater
 @Slf4j
 @Getter
 @RequiredArgsConstructor(staticName = "of")
-public class MaterialSentBack implements MaterialDomainEvent {
+public class MaterialSentRetour implements MaterialDomainEvent {
 
     private final MaterialReference materialReference;
     private final MaterialQuantity sentBackQuantity;

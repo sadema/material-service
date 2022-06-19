@@ -2,7 +2,7 @@ package nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.mate
 
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialRegistered;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialReserved;
-import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialSentBack;
+import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialSentRetour;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialStockChanged;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialUsed;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.valueobjects.MaterialReference;
@@ -15,7 +15,7 @@ public interface MaterialViewStorePort {
     void save(MaterialStockChanged materialStockChanged);
     void save(MaterialReserved materialReserved);
     void save(MaterialUsed materialUsed);
-    void save(MaterialSentBack materialSentBack);
+    void save(MaterialSentRetour materialSentRetour);
     List<MaterialView> getAllMaterial();
     MaterialView getMaterialByReference(MaterialReference materialReference);
 

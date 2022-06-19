@@ -5,7 +5,7 @@ import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.Aggre
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.Material;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialRegistered;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialReserved;
-import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialSentBack;
+import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialSentRetour;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialStockChanged;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialUsed;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.eventstore.MaterialEventStorePort;
@@ -42,7 +42,7 @@ public class MaterialEventStoreAdapter implements MaterialEventStorePort {
     }
 
     @Override
-    public void save(MaterialSentBack materialSentBack) {
+    public void save(MaterialSentRetour materialSentRetour) {
 
     }
 

@@ -7,7 +7,7 @@ import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.mater
 
 @Getter
 @RequiredArgsConstructor(staticName = "of")
-public class RetourMaterialForTicket {
+public class SendMaterialRetourForTicket {
 
     private final MaterialQuantity retourQuantity;
     private final TicketReference ticketReference;

@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialRegistered;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialReserved;
-import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialSentBack;
+import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialSentRetour;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialStockChanged;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialUsed;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.valueobjects.MaterialDescription;
@@ -71,12 +71,12 @@ public class MaterialViewStoreAdapter implements MaterialViewStorePort {
     }
 
     @Override
-    public void save(MaterialSentBack materialSentBack) {
-        MaterialDocument materialDocument = materialDocumentRepository.findByReference(materialSentBack.getMaterialReference().getValue())
-                .orElseThrow(() -> new MaterialNotFoundException(String.format("Material with reference %s not found", materialSentBack.getMaterialReference().getValue())));
-        UUID ticketReference = materialSentBack.getTicketReference().getValue();
+    public void save(MaterialSentRetour materialSentRetour) {
+        MaterialDocument materialDocument = materialDocumentRepository.findByReference(materialSentRetour.getMaterialReference().getValue())
+                .orElseThrow(() -> new MaterialNotFoundException(String.format("Material with reference %s not found", materialSentRetour.getMaterialReference().getValue())));
+        UUID ticketReference = materialSentRetour.getTicketReference().getValue();
         TicketMaterialDocumentPart ticketMaterial = getTicketMaterial(materialDocument, ticketReference);
-        Integer calculatedUsed = ticketMaterial.getUsed() - materialSentBack.getSentBackQuantity().getValue();
+        Integer calculatedUsed = ticketMaterial.getUsed() - materialSentRetour.getSentBackQuantity().getValue();
         ticketMaterial.setUsed(calculatedUsed);
         materialDocumentRepository.save(materialDocument);
     }

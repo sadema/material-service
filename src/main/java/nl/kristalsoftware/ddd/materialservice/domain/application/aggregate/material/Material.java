@@ -6,11 +6,11 @@ import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.BaseA
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.command.AddMaterialToStock;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.command.RegisterMaterial;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.command.ReserveMaterialForTicket;
-import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.command.RetourMaterialForTicket;
+import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.command.SendMaterialRetourForTicket;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.command.UseMaterialForTicket;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialRegistered;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialReserved;
-import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialSentBack;
+import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialSentRetour;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialStockChanged;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialUsed;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.valueobjects.MaterialQuantity;
@@ -50,9 +50,11 @@ public class Material extends BaseAggregateRoot<MaterialDomainEventHandler, Mate
     @Override
     public void load(MaterialReserved materialReserved) {
         TicketReference ticketReference = materialReserved.getTicketReference();
-        MaterialQuantity currentlyReserved = getCurrentReservedMaterialByTicket(ticketReference);
-        MaterialQuantity newReserved = MaterialQuantity.of(currentlyReserved.add(materialReserved.getReservedQuantity()).getValue());
+        MaterialQuantity currentlyReservedByTicket = getCurrentReservedMaterialByTicket(ticketReference);
+        MaterialQuantity newReserved = MaterialQuantity.of(currentlyReservedByTicket.add(materialReserved.getReservedQuantity()).getValue());
         materialRootEntity.getMaterialReservedByTicket().put(ticketReference, newReserved);
+        MaterialQuantity currentlyReserved = materialRootEntity.getMaterialReserved();
+        materialRootEntity.setMaterialReserved(currentlyReserved.add(materialReserved.getReservedQuantity()));
     }
 
     private MaterialQuantity getCurrentReservedMaterialByTicket(TicketReference ticketReference) {
@@ -66,9 +68,9 @@ public class Material extends BaseAggregateRoot<MaterialDomainEventHandler, Mate
         materialRootEntity.setMaterialUsed(currentlyUsed.add(addedToUsed));
     }
 
-    public void load(MaterialSentBack materialSentBack) {
+    public void load(MaterialSentRetour materialSentRetour) {
         MaterialQuantity currentlySentBack = materialRootEntity.getMaterialSentBack();
-        materialRootEntity.setMaterialSentBack(currentlySentBack.add(materialSentBack.getSentBackQuantity()));
+        materialRootEntity.setMaterialSentBack(currentlySentBack.add(materialSentRetour.getSentBackQuantity()));
     }
 
     public void handleCommand(RegisterMaterial registerMaterial) {
@@ -104,11 +106,13 @@ public class Material extends BaseAggregateRoot<MaterialDomainEventHandler, Mate
     }
 
     private boolean isEnoughMaterialInStockToReserve(MaterialQuantity currentlyInStock, MaterialQuantity toReserveForTicket) {
-        return currentlyInStock.greaterThan(toReserveForTicket);
+        MaterialQuantity maxToReserve = currentlyInStock.substract(materialRootEntity.getMaterialReserved());
+        return maxToReserve.greaterThan(toReserveForTicket);
     }
 
     private boolean isEnoughMaterialInStockToUse(MaterialQuantity currentlyInStock, MaterialQuantity toUseForTicket) {
-        return currentlyInStock.greaterThan(toUseForTicket);
+        MaterialQuantity maxToUse = currentlyInStock.substract(materialRootEntity.getMaterialReserved());
+        return maxToUse.greaterThan(toUseForTicket);
     }
 
     @Transactional
@@ -151,15 +155,15 @@ public class Material extends BaseAggregateRoot<MaterialDomainEventHandler, Mate
     }
 
     @Transactional
-    public void handleCommand(RetourMaterialForTicket retourMaterialForTicket) {
-        this.sendEvent(MaterialSentBack.of(
+    public void handleCommand(SendMaterialRetourForTicket sendMaterialRetourForTicket) {
+        this.sendEvent(MaterialSentRetour.of(
                 getReference(),
-                retourMaterialForTicket.getRetourQuantity(),
-                retourMaterialForTicket.getTicketReference()
+                sendMaterialRetourForTicket.getRetourQuantity(),
+                sendMaterialRetourForTicket.getTicketReference()
         ));
         this.sendEvent(MaterialStockChanged.of(
                 getReference(),
-                retourMaterialForTicket.getRetourQuantity()
+                sendMaterialRetourForTicket.getRetourQuantity()
         ));
     }
 

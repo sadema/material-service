@@ -2,7 +2,7 @@ package nl.kristalsoftware.ddd.materialservice.eventstore.material;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialSentBack;
+import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialSentRetour;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.valueobjects.MaterialQuantity;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.valueobjects.MaterialReference;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.valueobjects.TicketReference;
@@ -14,7 +14,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Data
 @Entity(name = "MaterialSentBackEvent")
-public class MaterialSentBackEventEntity extends UUIDBaseEventEntity<MaterialSentBack> {
+public class MaterialSentBackEventEntity extends UUIDBaseEventEntity<MaterialSentRetour> {
 
     private Integer sentBackQuantity;
     private UUID ticketReference;
@@ -29,18 +29,18 @@ public class MaterialSentBackEventEntity extends UUIDBaseEventEntity<MaterialSen
         this.ticketReference = ticketReference;
     }
 
-    public static MaterialSentBackEventEntity of(MaterialSentBack materialSentBack) {
+    public static MaterialSentBackEventEntity of(MaterialSentRetour materialSentRetour) {
         return new MaterialSentBackEventEntity(
-                materialSentBack.getMaterialReference().getValue(),
-                materialSentBack.getClass().getSimpleName(),
-                materialSentBack.getSentBackQuantity().getValue(),
-                materialSentBack.getTicketReference().getValue()
+                materialSentRetour.getMaterialReference().getValue(),
+                materialSentRetour.getClass().getSimpleName(),
+                materialSentRetour.getSentBackQuantity().getValue(),
+                materialSentRetour.getTicketReference().getValue()
         );
     }
 
     @Override
-    public MaterialSentBack getDomainEvent() {
-        return MaterialSentBack.of(
+    public MaterialSentRetour getDomainEvent() {
+        return MaterialSentRetour.of(
                 MaterialReference.of(getReference()),
                 MaterialQuantity.of(sentBackQuantity),
                 TicketReference.of(ticketReference)
