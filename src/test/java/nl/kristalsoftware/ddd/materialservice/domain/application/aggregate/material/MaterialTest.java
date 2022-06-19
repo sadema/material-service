@@ -73,7 +73,7 @@ class MaterialTest {
                         TicketReference.of(UUID.randomUUID())
                 ))
                 .testHandleReserveMaterialForTicketCommand(CURRENTLY_IN_STOCK_8)
-                .shouldSendMaterialReservedEvent();
+                .shouldNotSendMaterialReservedEvent();
     }
 
     private Tester tester() {
@@ -157,6 +157,10 @@ class MaterialTest {
             MaterialReserved actual = materialReservedEventCaptor.getValue();
             assertEquals(RESERVE_QUANTITY_5, actual.getReservedQuantity().getValue());
             return this;
+        }
+
+        public void shouldNotSendMaterialReservedEvent() {
+            verify(materialDomainEventHandler, times(0)).save(materialReservedEventCaptor.capture());
         }
     }
 
