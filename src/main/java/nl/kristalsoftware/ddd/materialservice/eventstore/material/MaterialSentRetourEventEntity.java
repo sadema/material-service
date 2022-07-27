@@ -14,12 +14,12 @@ import java.util.UUID;
 @NoArgsConstructor
 @Data
 @Entity(name = "MaterialSentBackEvent")
-public class MaterialSentBackEventEntity extends UUIDBaseEventEntity<MaterialSentRetour> {
+public class MaterialSentRetourEventEntity extends UUIDBaseEventEntity<MaterialSentRetour> {
 
     private Integer sentBackQuantity;
     private UUID ticketReference;
 
-    private MaterialSentBackEventEntity(
+    private MaterialSentRetourEventEntity(
             UUID materialReference,
             String domainEventName,
             Integer sentBackQuantity,
@@ -29,11 +29,11 @@ public class MaterialSentBackEventEntity extends UUIDBaseEventEntity<MaterialSen
         this.ticketReference = ticketReference;
     }
 
-    public static MaterialSentBackEventEntity of(MaterialSentRetour materialSentRetour) {
-        return new MaterialSentBackEventEntity(
+    public static MaterialSentRetourEventEntity of(MaterialSentRetour materialSentRetour) {
+        return new MaterialSentRetourEventEntity(
                 materialSentRetour.getMaterialReference().getValue(),
                 materialSentRetour.getClass().getSimpleName(),
-                materialSentRetour.getSentBackQuantity().getValue(),
+                materialSentRetour.getSentRetourQuantity().getValue(),
                 materialSentRetour.getTicketReference().getValue()
         );
     }

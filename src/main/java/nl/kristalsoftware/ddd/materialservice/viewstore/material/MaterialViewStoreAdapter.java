@@ -2,11 +2,9 @@ package nl.kristalsoftware.ddd.materialservice.viewstore.material;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialRegistered;
-import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialReserved;
-import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialSentRetour;
-import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialStockChanged;
-import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialUsed;
+import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.AggregateVersionPort;
+import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.Material;
+import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialDomainEvent;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.valueobjects.MaterialDescription;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.valueobjects.MaterialQuantity;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.valueobjects.MaterialReference;
@@ -14,6 +12,9 @@ import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.mater
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.viewport.MaterialView;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.viewport.MaterialViewStorePort;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.viewport.TicketMaterialView;
+import nl.kristalsoftware.ddd.materialservice.viewstore.material.document.MaterialDocument;
+import nl.kristalsoftware.ddd.materialservice.viewstore.material.document.MaterialDocumentRepository;
+import nl.kristalsoftware.ddd.materialservice.viewstore.material.document.MaterialDocumentTicketPart;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -25,65 +26,22 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 @Component
-public class MaterialViewStoreAdapter implements MaterialViewStorePort {
+public class MaterialViewStoreAdapter implements MaterialViewStorePort, AggregateVersionPort<MaterialReference> {
 
     private final MaterialDocumentRepository materialDocumentRepository;
 
     @Override
-    public void save(MaterialRegistered materialRegistered) {
-        MaterialDocument materialDocument = MaterialDocument.of(
-                materialRegistered.getMaterialReference().getValue(),
-                materialRegistered.getMaterialDescription().getValue(),
-                materialRegistered.getMaterialInStock().getValue()
-        );
-        materialDocumentRepository.save(materialDocument);
+    public void save(List<MaterialDomainEvent> domainEventList, Material material) {
+        MaterialDocumentPersistenceAdapter materialDocumentPersistenceAdapter = new MaterialDocumentPersistenceAdapter(materialDocumentRepository, material);
+        materialDocumentPersistenceAdapter.updateDocument(domainEventList);
     }
 
+    @Deprecated
     @Override
-    public void save(MaterialStockChanged materialStockChanged) {
-        MaterialDocument materialDocument = materialDocumentRepository.findByReference(materialStockChanged.getMaterialReference().getValue())
-                .orElseThrow(() -> new MaterialNotFoundException(String.format("Material with reference %s not found", materialStockChanged.getMaterialReference().getValue())));
-        Integer calculatedStock = materialDocument.getInStock() + materialStockChanged.getMaterialInStock().getValue();
-        materialDocument.setInStock(calculatedStock);
-        materialDocumentRepository.save(materialDocument);
-    }
-
-    @Override
-    public void save(MaterialReserved materialReserved) {
-        MaterialDocument materialDocument = materialDocumentRepository.findByReference(materialReserved.getMaterialReference().getValue())
-                .orElseThrow(() -> new MaterialNotFoundException(String.format("Material with reference %s not found", materialReserved.getMaterialReference().getValue())));
-        UUID ticketReference = materialReserved.getTicketReference().getValue();
-        TicketMaterialDocumentPart ticketMaterial = getTicketMaterial(materialDocument, ticketReference);
-        Integer calculatedReserved = ticketMaterial.getReserved() + materialReserved.getReservedQuantity().getValue();
-        ticketMaterial.setReserved(calculatedReserved);
-        materialDocumentRepository.save(materialDocument);
-    }
-
-    @Override
-    public void save(MaterialUsed materialUsed) {
-        MaterialDocument materialDocument = materialDocumentRepository.findByReference(materialUsed.getMaterialReference().getValue())
-                .orElseThrow(() -> new MaterialNotFoundException(String.format("Material with reference %s not found", materialUsed.getMaterialReference().getValue())));
-        UUID ticketReference = materialUsed.getTicketReference().getValue();
-        TicketMaterialDocumentPart ticketMaterial = getTicketMaterial(materialDocument, ticketReference);
-        Integer calculatedUsed = ticketMaterial.getUsed() + materialUsed.getUsedQuantity().getValue();
-        ticketMaterial.setUsed(calculatedUsed);
-        materialDocumentRepository.save(materialDocument);
-    }
-
-    @Override
-    public void save(MaterialSentRetour materialSentRetour) {
-        MaterialDocument materialDocument = materialDocumentRepository.findByReference(materialSentRetour.getMaterialReference().getValue())
-                .orElseThrow(() -> new MaterialNotFoundException(String.format("Material with reference %s not found", materialSentRetour.getMaterialReference().getValue())));
-        UUID ticketReference = materialSentRetour.getTicketReference().getValue();
-        TicketMaterialDocumentPart ticketMaterial = getTicketMaterial(materialDocument, ticketReference);
-        Integer calculatedUsed = ticketMaterial.getUsed() - materialSentRetour.getSentBackQuantity().getValue();
-        ticketMaterial.setUsed(calculatedUsed);
-        materialDocumentRepository.save(materialDocument);
-    }
-
-    private TicketMaterialDocumentPart getTicketMaterial(MaterialDocument materialDocument, UUID ticketReference) {
-        Map<UUID,TicketMaterialDocumentPart> materialByTicket = materialDocument.getMaterialByTicket();
-        return materialByTicket.computeIfAbsent(ticketReference, key -> new TicketMaterialDocumentPart());
+    public Long getVersion(MaterialReference reference) {
+        MaterialDocument materialDocument = materialDocumentRepository.findByReference(reference.getValue())
+                .orElseThrow(() -> new MaterialNotFoundException(String.format("Material with reference %s not found", reference.getValue())));
+        return materialDocument.getVersion();
     }
 
     @Override
@@ -100,17 +58,6 @@ public class MaterialViewStoreAdapter implements MaterialViewStorePort {
                 .collect(Collectors.toList());
     }
 
-    private MaterialView convert(MaterialDocument materialDocument) {
-        return MaterialView.of(
-        MaterialReference.of(materialDocument.getReference()),
-                MaterialDescription.of(materialDocument.getDescription()),
-                MaterialQuantity.of(materialDocument.getInStock()),
-                materialDocument.getMaterialByTicket().entrySet().stream()
-                        .map(entryset -> convert(entryset))
-                        .collect(Collectors.toSet())
-        );
-    }
-    @Override
     public MaterialView getMaterialByReference(MaterialReference materialReference) {
         Optional<MaterialDocument> materialDocumentOptional = materialDocumentRepository.findByReference(materialReference.getValue());
         if (materialDocumentOptional.isPresent()) {
@@ -119,9 +66,20 @@ public class MaterialViewStoreAdapter implements MaterialViewStorePort {
         throw new MaterialNotFoundException(String.format("Material with reference: %s not found!", materialReference.getValue()));
     }
 
-    private Map.Entry<TicketReference,TicketMaterialView> convert(Map.Entry<UUID,TicketMaterialDocumentPart> materialByTicket) {
+    private MaterialView convert(MaterialDocument materialDocument) {
+        return MaterialView.of(
+                MaterialReference.of(materialDocument.getReference()),
+                MaterialDescription.of(materialDocument.getDescription()),
+                MaterialQuantity.of(materialDocument.getInStock()),
+                materialDocument.getMaterialByTicket().entrySet().stream()
+                        .map(entryset -> convert(entryset))
+                        .collect(Collectors.toSet())
+        );
+    }
+
+    private Map.Entry<TicketReference, TicketMaterialView> convert(Map.Entry<UUID, MaterialDocumentTicketPart> materialByTicket) {
         UUID key = materialByTicket.getKey();
-        TicketMaterialDocumentPart value = materialByTicket.getValue();
+        MaterialDocumentTicketPart value = materialByTicket.getValue();
         return Map.entry(
                 TicketReference.of(key),
                 TicketMaterialView.of(
@@ -129,4 +87,5 @@ public class MaterialViewStoreAdapter implements MaterialViewStorePort {
                         MaterialQuantity.of(value.getUsed()))
         );
     }
+
 }

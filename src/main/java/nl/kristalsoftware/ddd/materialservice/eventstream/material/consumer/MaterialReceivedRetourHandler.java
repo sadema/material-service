@@ -23,7 +23,7 @@ public class MaterialReceivedRetourHandler implements KafkaDomainEventHandler<St
 
     @Override
     public void save(MaterialRetourEventData message) throws AggregateNotFoundException {
-        materialCommandService.retourMaterialForTicket(
+        materialCommandService.sendMaterialRetourForTicket(
                 MaterialReference.of(message.getReference()),
                 MaterialQuantity.of(((Long) message.getQuantity()).intValue()),
                 TicketReference.of(message.getTicketreference())

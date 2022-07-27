@@ -11,6 +11,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
 
 import javax.validation.ConstraintViolationException;
 import java.util.UUID;
@@ -23,6 +24,7 @@ public class MaterialServiceApplication {
         SpringApplication.run(MaterialServiceApplication.class, args);
     }
 
+    @Profile("!Test")
     @Bean
     CommandLineRunner runMaterialCommands(MaterialCommandService materialCommandService) {
         return args -> {

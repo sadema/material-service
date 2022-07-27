@@ -1,4 +1,4 @@
-package nl.kristalsoftware.ddd.materialservice.viewstore.material;
+package nl.kristalsoftware.ddd.materialservice.viewstore.material.document;
 
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;

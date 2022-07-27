@@ -2,6 +2,7 @@ package nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.mate
 
 import lombok.RequiredArgsConstructor;
 import nl.kristalsoftware.ddd.materialservice.domain.EventStoreLoader;
+import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.AggregateVersionPort;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.Material;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.MaterialDomainEventHandler;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.valueobjects.MaterialReference;
@@ -14,10 +15,11 @@ import java.util.UUID;
 public class MaterialEventStoreLoader implements EventStoreLoader<Material, MaterialReference> {
 
     private final MaterialDomainEventHandler materialDomainEventHandler;
+    private final AggregateVersionPort<MaterialReference> aggregateVersionPort;
 
     @Override
     public Material loadAggregate(MaterialReference reference) throws AggregateNotFoundException {
-        Material material = Material.of(materialDomainEventHandler, reference);
+        Material material = Material.of(materialDomainEventHandler, reference, aggregateVersionPort.getVersion(reference));
         if (materialDomainEventHandler.getDomainEvents(material)) {
             return material;
         }

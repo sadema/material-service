@@ -75,7 +75,7 @@ public class MaterialCommandService {
         return false;
     }
 
-    public void retourMaterialForTicket(
+    public void sendMaterialRetourForTicket(
             MaterialReference materialReference,
             MaterialQuantity retourQuantity,
             TicketReference ticketReference) throws AggregateNotFoundException {

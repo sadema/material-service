@@ -1,22 +1,32 @@
 package nl.kristalsoftware.ddd.materialservice.domain.application.aggregate;
 
 import lombok.Getter;
-import nl.kristalsoftware.ddd.materialservice.domain.BaseDomainEvent;
 import nl.kristalsoftware.ddd.materialservice.domain.DomainEventHandler;
 
-public class BaseAggregateRoot<U extends DomainEventHandler,R> {
+public abstract class BaseAggregateRoot<U extends DomainEventHandler,R> {
 
     @Getter
     private final R reference;
-    private final U domainEventHandler;
+    protected final U domainEventHandler;
+    @Getter
+    public final Long version;
+    @Getter
+    public final boolean existingAggregate;
 
-    public BaseAggregateRoot(U domainEventHandler, R reference) {
+    protected BaseAggregateRoot(U domainEventHandler, R reference) {
         this.reference = reference;
         this.domainEventHandler = domainEventHandler;
+        this.version = 0L;
+        this.existingAggregate = false;
     }
 
-    protected <T extends BaseDomainEvent> void sendEvent(T domainEvent) {
-        domainEventHandler.save(domainEvent);
+    protected BaseAggregateRoot(U domainEventHandler, R reference, Long version) {
+        this.reference = reference;
+        this.domainEventHandler = domainEventHandler;
+        this.version = version;
+        this.existingAggregate = true;
     }
+
+    public abstract void handleEvents();
 
 }

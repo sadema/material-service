@@ -11,6 +11,11 @@ import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.mater
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.valueobjects.MaterialQuantity;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.valueobjects.MaterialReference;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.valueobjects.TicketReference;
+import nl.kristalsoftware.ddd.materialservice.rest.material.command.requestbody.AddMaterialToStockRequestBody;
+import nl.kristalsoftware.ddd.materialservice.rest.material.command.requestbody.RegisterMaterialRequestBody;
+import nl.kristalsoftware.ddd.materialservice.rest.material.command.requestbody.ReserveMaterialForTicketRequestBody;
+import nl.kristalsoftware.ddd.materialservice.rest.material.command.requestbody.SendMaterialRetourForTicketRequestBody;
+import nl.kristalsoftware.ddd.materialservice.rest.material.command.requestbody.UseMaterialForTicketRequestBody;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -53,7 +58,7 @@ public class MaterialCommandController {
             response.setHeader("Location", ServletUriComponentsBuilder.fromCurrentContextPath()
                     .path("/material/" + materialReference.getValue()).toUriString());
             response.setStatus(HttpStatus.CREATED.value());
-        } catch(ConstraintViolationException e) {
+        } catch (ConstraintViolationException e) {
             log.info(e.getLocalizedMessage());
             response.setStatus(HttpStatus.FORBIDDEN.value());
         }
@@ -133,6 +138,32 @@ public class MaterialCommandController {
             )) {
                 return new ResponseEntity<>(HttpStatus.FORBIDDEN);
             }
+        } catch (AggregateNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PutMapping(value = "/{materialReference}/send-retour-for-ticket")
+    @Operation(
+            summary = "Send material retour",
+            description = "Send material retour for ticket",
+            responses = {
+                    @ApiResponse(description = "Success", responseCode = "200"),
+                    @ApiResponse(description = "Not Found", responseCode = "404"),
+                    @ApiResponse(description = "Forbidden", responseCode = "403")
+            }
+    )
+    public ResponseEntity<Void> sendMaterialRetourForTicket(
+            @PathVariable String materialReference,
+            @Valid @RequestBody SendMaterialRetourForTicketRequestBody sendMaterialRetourForTicketRequestBody
+    ) {
+        try {
+            materialCommandService.sendMaterialRetourForTicket(
+                    MaterialReference.of(UUID.fromString(materialReference)),
+                    MaterialQuantity.of(sendMaterialRetourForTicketRequestBody.getMaterialQuantity()),
+                    TicketReference.of(sendMaterialRetourForTicketRequestBody.getTicketReference())
+            );
         } catch (AggregateNotFoundException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

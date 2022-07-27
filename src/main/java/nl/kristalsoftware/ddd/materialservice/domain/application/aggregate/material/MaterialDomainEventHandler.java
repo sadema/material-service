@@ -8,6 +8,8 @@ import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.mater
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 @Component
 public class MaterialDomainEventHandler implements DomainEventHandler<Material, MaterialDomainEvent> {
@@ -16,15 +18,17 @@ public class MaterialDomainEventHandler implements DomainEventHandler<Material, 
 
     private final MaterialViewStorePort materialViewStorePort;
 
-    @Transactional
-    @Override
-    public <T extends MaterialDomainEvent> void save(T domainEvent) {
-        domainEvent.save(materialEventStorePort);
-        domainEvent.save(materialViewStorePort);
-    }
-
     @Override
     public Boolean getDomainEvents(Material aggregate) {
-        return materialEventStorePort.getDomainEvents(aggregate);
+        Boolean allDomainEventsLoaded = materialEventStorePort.loadAllDomainEvents(aggregate);
+        return allDomainEventsLoaded;
     }
+
+    @Transactional
+    @Override
+    public void handleEvents(List<MaterialDomainEvent> eventList, Material aggregate) {
+        materialEventStorePort.save(eventList);
+        materialViewStorePort.save(eventList, aggregate);
+    }
+
 }

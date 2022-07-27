@@ -8,6 +8,7 @@ import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.mater
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.command.ReserveMaterialForTicket;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.command.SendMaterialRetourForTicket;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.command.UseMaterialForTicket;
+import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialDomainEvent;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialRegistered;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialReserved;
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialSentRetour;
@@ -18,11 +19,15 @@ import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.mater
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.valueobjects.TicketReference;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
 @AggregateRoot
-public class Material extends BaseAggregateRoot<MaterialDomainEventHandler, MaterialReference> implements MaterialAggregateRoot {
+public class Material extends BaseAggregateRoot<MaterialDomainEventHandler, MaterialReference> implements MaterialAggregateEventsLoader {
+
+    private final List<MaterialDomainEvent> eventList = new ArrayList<>();
 
     private MaterialDomainEntity materialRootEntity = new MaterialDomainEntity();
 
@@ -30,8 +35,21 @@ public class Material extends BaseAggregateRoot<MaterialDomainEventHandler, Mate
         super(materialDomainEventHandler, materialReference);
     }
 
+    private Material(MaterialDomainEventHandler materialDomainEventHandler, MaterialReference materialReference, Long version) {
+        super(materialDomainEventHandler, materialReference, version);
+    }
+
+    @Override
+    public void handleEvents() {
+        domainEventHandler.handleEvents(eventList, this);
+    }
+
     public static Material of(MaterialDomainEventHandler materialDomainEventHandler, MaterialReference materialReference) {
         return new Material(materialDomainEventHandler, materialReference);
+    }
+
+    public static Material of(MaterialDomainEventHandler materialDomainEventHandler, MaterialReference materialReference, Long version) {
+        return new Material(materialDomainEventHandler, materialReference, version);
     }
 
     @Override
@@ -70,24 +88,26 @@ public class Material extends BaseAggregateRoot<MaterialDomainEventHandler, Mate
 
     public void load(MaterialSentRetour materialSentRetour) {
         MaterialQuantity currentlySentBack = materialRootEntity.getMaterialSentBack();
-        materialRootEntity.setMaterialSentBack(currentlySentBack.add(materialSentRetour.getSentBackQuantity()));
+        materialRootEntity.setMaterialSentBack(currentlySentBack.add(materialSentRetour.getSentRetourQuantity()));
     }
 
     public void handleCommand(RegisterMaterial registerMaterial) {
         log.info("====> Register {} with a quantity of {}", registerMaterial.getMaterialDescription(), registerMaterial.getMaterialQuantity().getValue());
-        this.sendEvent(MaterialRegistered.of(
+        eventList.add(MaterialRegistered.of(
                 getReference(),
                 registerMaterial.getMaterialDescription(),
                 registerMaterial.getMaterialQuantity()
         ));
+        handleEvents();
     }
 
     public void handleCommand(AddMaterialToStock addMaterialToStock) {
         log.info("====> Change stock with quantity {}", addMaterialToStock.getMaterialQuantity().getValue());
-        this.sendEvent(MaterialStockChanged.of(
+        eventList.add(MaterialStockChanged.of(
                 getReference(),
                 addMaterialToStock.getMaterialQuantity()
         ));
+        handleEvents();
     }
 
     public Boolean handleCommand(ReserveMaterialForTicket reserveMaterialForTicket) {
@@ -95,11 +115,12 @@ public class Material extends BaseAggregateRoot<MaterialDomainEventHandler, Mate
         MaterialQuantity currentlyInStock = materialRootEntity.getMaterialInStock();
         MaterialQuantity toReserveForTicket = reserveMaterialForTicket.getReservedQuantity();
         if (isEnoughMaterialInStockToReserve(currentlyInStock, toReserveForTicket)) {
-            this.sendEvent(MaterialReserved.of(
+            eventList.add(MaterialReserved.of(
                     getReference(),
                     toReserveForTicket,
                     reserveMaterialForTicket.getTicketReference()
             ));
+            handleEvents();
             return true;
         }
         return false;
@@ -125,30 +146,31 @@ public class Material extends BaseAggregateRoot<MaterialDomainEventHandler, Mate
 
         MaterialQuantity toUseForTicket = useMaterialForTicket.getUsedQuantity();
         if (isEnoughMaterialInStockToUse(currentlyInStock, toUseForTicket)) {
-            this.sendEvent(MaterialUsed.of(
+            eventList.add(MaterialUsed.of(
                     getReference(),
                     toUseForTicket,
                     useMaterialForTicket.getTicketReference()
             ));
-            this.sendEvent(MaterialStockChanged.of(
+            eventList.add(MaterialStockChanged.of(
                     getReference(),
                     toUseForTicket.inverse()
             ));
             if (currentlyReserved.greaterThan(0)) {
                 if (toUseForTicket.greaterThan(currentlyReserved)) {
-                    this.sendEvent(MaterialReserved.of(
+                    eventList.add(MaterialReserved.of(
                             getReference(),
                             currentlyReserved.inverse(),
                             useMaterialForTicket.getTicketReference()
                     ));
                 } else {
-                    this.sendEvent(MaterialReserved.of(
+                    eventList.add(MaterialReserved.of(
                             getReference(),
                             toUseForTicket.inverse(),
                             useMaterialForTicket.getTicketReference()
                     ));
                 }
             }
+            handleEvents();
             return true;
         }
         return false;
@@ -156,15 +178,12 @@ public class Material extends BaseAggregateRoot<MaterialDomainEventHandler, Mate
 
     @Transactional
     public void handleCommand(SendMaterialRetourForTicket sendMaterialRetourForTicket) {
-        this.sendEvent(MaterialSentRetour.of(
+        eventList.add(MaterialSentRetour.of(
                 getReference(),
                 sendMaterialRetourForTicket.getRetourQuantity(),
                 sendMaterialRetourForTicket.getTicketReference()
         ));
-        this.sendEvent(MaterialStockChanged.of(
-                getReference(),
-                sendMaterialRetourForTicket.getRetourQuantity()
-        ));
+        handleEvents();
     }
 
     public String toString() {

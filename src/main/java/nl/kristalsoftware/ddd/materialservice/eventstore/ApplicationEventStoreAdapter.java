@@ -2,7 +2,6 @@ package nl.kristalsoftware.ddd.materialservice.eventstore;
 
 import lombok.RequiredArgsConstructor;
 import nl.kristalsoftware.ddd.materialservice.domain.BaseDomainEvent;
-import nl.kristalsoftware.ddd.materialservice.domain.ViewStoreProvider;
 import nl.kristalsoftware.ddd.materialservice.domain.application.ApplicationEventStorePort;
 import org.springframework.stereotype.Component;
 
@@ -24,11 +23,11 @@ public class ApplicationEventStoreAdapter implements ApplicationEventStorePort {
 
     }
 
-    @Override
-    public void rebuildViewStore(ViewStoreProvider viewStoreProvider) {
-        StreamSupport.stream(eventStoreRepository.findAll().spliterator(), false)
-                .map(it -> it.getDomainEvent())
-                .forEach(it -> it.save(viewStoreProvider));
-    }
+//    @Deprecated
+//    public void rebuildViewStore(ViewStoreProvider viewStoreProvider) {
+//        StreamSupport.stream(eventStoreRepository.findAll().spliterator(), false)
+//                .map(it -> it.getDomainEvent())
+//                .forEach(it -> it.save(viewStoreProvider));
+//    }
 
 }

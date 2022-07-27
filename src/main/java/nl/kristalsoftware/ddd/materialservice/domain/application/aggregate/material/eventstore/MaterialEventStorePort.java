@@ -1,18 +1,12 @@
 package nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.eventstore;
 
 import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.Material;
-import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialRegistered;
-import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialReserved;
-import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialSentRetour;
-import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialStockChanged;
-import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialUsed;
+import nl.kristalsoftware.ddd.materialservice.domain.application.aggregate.material.event.MaterialDomainEvent;
+
+import java.util.List;
 
 public interface MaterialEventStorePort {
-    void save(MaterialRegistered materialRegistered);
-    void save(MaterialStockChanged materialStockChanged);
-    void save(MaterialReserved materialReserved);
-    void save(MaterialUsed materialUsed);
-    Boolean getDomainEvents(Material aggregate);
+    Boolean loadAllDomainEvents(Material aggregate);
 
-    void save(MaterialSentRetour materialSentRetour);
+    void save(List<MaterialDomainEvent> eventList);
 }

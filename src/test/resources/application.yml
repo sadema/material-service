@@ -1,0 +1,6 @@
+spring:
+  profiles:
+    active: Test
+  mongodb:
+    embedded:
+      version: latest

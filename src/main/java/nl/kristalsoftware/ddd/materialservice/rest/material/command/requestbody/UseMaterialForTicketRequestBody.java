@@ -1,4 +1,4 @@
-package nl.kristalsoftware.ddd.materialservice.rest.material.command;
+package nl.kristalsoftware.ddd.materialservice.rest.material.command.requestbody;
 
 import lombok.Data;
 

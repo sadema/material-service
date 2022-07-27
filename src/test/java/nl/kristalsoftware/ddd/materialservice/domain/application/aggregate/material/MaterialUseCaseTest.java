@@ -43,8 +43,8 @@ public class MaterialUseCaseTest {
         MaterialView materialView = materialViewService.getMaterialByReference(materialReference);
         // Assert
         assertThat(MATERIAL_DESCRIPTION_1).isEqualTo(materialView.getMaterialDescription().getValue());
-        assertThat(15).isEqualTo(materialView.getMaterialItemsInStock().getValue());
-        assertThat(0).isEqualTo(materialView.getMaterialByTicket().size());
+        assertThat(materialView.getMaterialItemsInStock().getValue()).isEqualTo(15);
+        assertThat(materialView.getMaterialByTicket().size()).isEqualTo(0);
 
     }
 
@@ -62,8 +62,8 @@ public class MaterialUseCaseTest {
         MaterialView materialView = materialViewService.getMaterialByReference(materialReference);
         // Assert
         assertThat(MATERIAL_DESCRIPTION_1).isEqualTo(materialView.getMaterialDescription().getValue());
-        assertThat(23).isEqualTo(materialView.getMaterialItemsInStock().getValue());
-        assertThat(0).isEqualTo(materialView.getMaterialByTicket().size());
+        assertThat(materialView.getMaterialItemsInStock().getValue()).isEqualTo(23);
+        assertThat(materialView.getMaterialByTicket().size()).isEqualTo(0);
     }
 
     @Test
@@ -82,8 +82,8 @@ public class MaterialUseCaseTest {
         MaterialView materialView = materialViewService.getMaterialByReference(materialReference);
         // Assert
         assertThat(MATERIAL_DESCRIPTION_1).isEqualTo(materialView.getMaterialDescription().getValue());
-        assertThat(15).isEqualTo(materialView.getMaterialItemsInStock().getValue());
-        assertThat(1).isEqualTo(materialView.getMaterialByTicket().size());
+        assertThat(materialView.getMaterialItemsInStock().getValue()).isEqualTo(15);
+        assertThat(materialView.getMaterialByTicket().size()).isEqualTo(1);
         assertThat(materialView.getMaterialByTicket())
                 .contains(
                         entry(TICKET_REFERENCE_1, TicketMaterialView.of(
@@ -92,6 +92,26 @@ public class MaterialUseCaseTest {
                                 )
                         )
                 );
+    }
+
+    @Test
+    void testReserveTooMuchMaterialForTicket() throws AggregateNotFoundException {
+        // Arrange
+        MaterialReference materialReference = materialCommandService.registerNewMaterialType(
+                MaterialDescription.of(MATERIAL_DESCRIPTION_1),
+                MaterialQuantity.of(15)
+        );
+        materialCommandService.reserveMaterialForTicket(
+                materialReference,
+                MaterialQuantity.of(20),
+                TICKET_REFERENCE_1
+        );
+        // Act
+        MaterialView materialView = materialViewService.getMaterialByReference(materialReference);
+        // Assert
+        assertThat(MATERIAL_DESCRIPTION_1).isEqualTo(materialView.getMaterialDescription().getValue());
+        assertThat(materialView.getMaterialItemsInStock().getValue()).isEqualTo(15);
+        assertThat(materialView.getMaterialByTicket().size()).isEqualTo(0);
     }
 
     @Test
@@ -110,13 +130,46 @@ public class MaterialUseCaseTest {
         MaterialView materialView = materialViewService.getMaterialByReference(materialReference);
         // Assert
         assertThat(MATERIAL_DESCRIPTION_1).isEqualTo(materialView.getMaterialDescription().getValue());
-        assertThat(12).isEqualTo(materialView.getMaterialItemsInStock().getValue());
-        assertThat(1).isEqualTo(materialView.getMaterialByTicket().size());
+        assertThat(materialView.getMaterialItemsInStock().getValue()).isEqualTo(12);
+        assertThat(materialView.getMaterialByTicket().size()).isEqualTo(1);
         assertThat(materialView.getMaterialByTicket())
                 .contains(
                         entry(TICKET_REFERENCE_1, TicketMaterialView.of(
                                         MaterialQuantity.of(0),
                                         MaterialQuantity.of(3)
+                                )
+                        )
+                );
+    }
+
+    @Test
+    void testSendMaterialRetourForTicket() throws AggregateNotFoundException {
+        // Arrange
+        MaterialReference materialReference = materialCommandService.registerNewMaterialType(
+                MaterialDescription.of(MATERIAL_DESCRIPTION_1),
+                MaterialQuantity.of(15)
+        );
+        materialCommandService.useMaterialForTicket(
+                materialReference,
+                MaterialQuantity.of(8),
+                TICKET_REFERENCE_1
+        );
+        materialCommandService.sendMaterialRetourForTicket(
+                materialReference,
+                MaterialQuantity.of(4),
+                TICKET_REFERENCE_1
+        );
+        // Act
+        MaterialView materialView = materialViewService.getMaterialByReference(materialReference);
+        // Assert
+        assertThat(MATERIAL_DESCRIPTION_1).isEqualTo(materialView.getMaterialDescription().getValue());
+        assertThat(materialView.getMaterialItemsInStock().getValue()).isEqualTo(11);
+        assertThat(materialView.getMaterialByTicket().size()).isEqualTo(1);
+        assertThat(materialView.getMaterialByTicket())
+                .contains(
+                        entry(TICKET_REFERENCE_1, TicketMaterialView.of(
+                                        MaterialQuantity.of(0),
+                                        MaterialQuantity.of(4)
                                 )
                         )
                 );
@@ -143,8 +196,8 @@ public class MaterialUseCaseTest {
         MaterialView materialView = materialViewService.getMaterialByReference(materialReference);
         // Assert
         assertThat(MATERIAL_DESCRIPTION_1).isEqualTo(materialView.getMaterialDescription().getValue());
-        assertThat(13).isEqualTo(materialView.getMaterialItemsInStock().getValue());
-        assertThat(1).isEqualTo(materialView.getMaterialByTicket().size());
+        assertThat(materialView.getMaterialItemsInStock().getValue()).isEqualTo(13);
+        assertThat(materialView.getMaterialByTicket().size()).isEqualTo(1);
         assertThat(materialView.getMaterialByTicket())
                 .contains(
                         entry(TICKET_REFERENCE_1, TicketMaterialView.of(
@@ -186,8 +239,8 @@ public class MaterialUseCaseTest {
         MaterialView materialView = materialViewService.getMaterialByReference(materialReference);
         // Assert
         assertThat(MATERIAL_DESCRIPTION_1).isEqualTo(materialView.getMaterialDescription().getValue());
-        assertThat(13).isEqualTo(materialView.getMaterialItemsInStock().getValue());
-        assertThat(2).isEqualTo(materialView.getMaterialByTicket().size());
+        assertThat(materialView.getMaterialItemsInStock().getValue()).isEqualTo(13);
+        assertThat(materialView.getMaterialByTicket().size()).isEqualTo(2);
         assertThat(materialView.getMaterialByTicket())
                 .contains(
                         entry(TICKET_REFERENCE_1, TicketMaterialView.of(
@@ -219,8 +272,8 @@ public class MaterialUseCaseTest {
         MaterialView materialView = materialViewService.getMaterialByReference(materialReference);
         // Assert
         assertThat(MATERIAL_DESCRIPTION_1).isEqualTo(materialView.getMaterialDescription().getValue());
-        assertThat(15).isEqualTo(materialView.getMaterialItemsInStock().getValue());
-        assertThat(0).isEqualTo(materialView.getMaterialByTicket().size());
+        assertThat(materialView.getMaterialItemsInStock().getValue()).isEqualTo(15);
+        assertThat(materialView.getMaterialByTicket().size()).isEqualTo(0);
     }
 
     @Test
@@ -239,8 +292,8 @@ public class MaterialUseCaseTest {
         MaterialView materialView = materialViewService.getMaterialByReference(materialReference);
         // Assert
         assertThat(MATERIAL_DESCRIPTION_1).isEqualTo(materialView.getMaterialDescription().getValue());
-        assertThat(15).isEqualTo(materialView.getMaterialItemsInStock().getValue());
-        assertThat(0).isEqualTo(materialView.getMaterialByTicket().size());
+        assertThat(materialView.getMaterialItemsInStock().getValue()).isEqualTo(15);
+        assertThat(materialView.getMaterialByTicket().size()).isEqualTo(0);
     }
 
     @Test
@@ -269,8 +322,8 @@ public class MaterialUseCaseTest {
         MaterialView materialView = materialViewService.getMaterialByReference(materialReference);
         // Assert
         assertThat(MATERIAL_DESCRIPTION_1).isEqualTo(materialView.getMaterialDescription().getValue());
-        assertThat(13).isEqualTo(materialView.getMaterialItemsInStock().getValue());
-        assertThat(2).isEqualTo(materialView.getMaterialByTicket().size());
+        assertThat(materialView.getMaterialItemsInStock().getValue()).isEqualTo(13);
+        assertThat(materialView.getMaterialByTicket().size()).isEqualTo(2);
         assertThat(materialView.getMaterialByTicket())
                 .contains(
                         entry(TICKET_REFERENCE_1, TicketMaterialView.of(
