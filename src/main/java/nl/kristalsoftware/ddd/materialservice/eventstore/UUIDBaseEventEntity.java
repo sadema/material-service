@@ -7,7 +7,6 @@ import lombok.Setter;
 import nl.kristalsoftware.ddd.materialservice.domain.BaseDomainEvent;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Type;
-import org.springframework.data.annotation.Version;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -39,10 +38,6 @@ public abstract class UUIDBaseEventEntity<T extends BaseDomainEvent> {
     @Setter(AccessLevel.NONE)
     @CreationTimestamp
     private LocalDateTime creationDateTime;
-
-    @Setter(AccessLevel.NONE)
-    @Version
-    private Long version;
 
     public UUIDBaseEventEntity(UUID reference, String domainEventName) {
         this.reference = reference;
